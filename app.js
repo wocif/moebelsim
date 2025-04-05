@@ -4,6 +4,8 @@ var engine = null; // Babylon 3D engine deklaration
 var sceneToRender = null; // Szene, die gerendert werden soll
 var scene; // Globale Szene-Variable, wird in initializeApp gesetzt
 
+let mode = 0;
+
 // Funktion zum Starten der Render-Schleife
 var startRenderLoop = function (engine, canvas) {
     engine.runRenderLoop(function () {
@@ -44,9 +46,9 @@ const createScene = async function () {
 
     // Lichtquellen erstellen
     var light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 10, 0), scene); // Position angepasst
-    light.intensity = 0.7; // Intensität angepasst
+    light.intensity = 1.7; // Intensität angepasst
     var light2 = new BABYLON.PointLight("light2", new BABYLON.Vector3(0, 5, -5), scene); // Position angepasst
-    light2.intensity = 0.5; // Intensität angepasst
+    light2.intensity = 1.5; // Intensität angepasst
 
     // Prüfen, ob AR unterstützt wird
     const arAvailable = await BABYLON.WebXRSessionManager.IsSessionSupportedAsync('immersive-ar');
@@ -176,11 +178,147 @@ const createScene = async function () {
         });
     }
 
-    // === Pointer Down Handler jetzt *innerhalb* von createScene ===
+    // Überprüfen, ob XR und die Input-Verwaltung verfügbar sind
+    if (xr && xr.baseExperience && xr.baseExperience.inputManager) {
+
+        // Wird ausgelöst, wenn ein Controller verbunden wird (beim Start der XR-Session oder wenn er eingeschaltet wird)
+        xr.baseExperience.inputManager.onControllerAddedObservable.add((inputSource) => {
+            console.log("Controller verbunden:", inputSource.uniqueId);
+
+            // Hole den Motion Controller
+            inputSource.onMotionControllerInitObservable.add((motionController) => {
+                console.log("Motion Controller initialisiert für:", inputSource.uniqueId, "Profil:", motionController.profileId);
+
+                // --- Beispiel: A-Taste (oft auf dem rechten Controller) ---
+                const aButtonComponent = motionController.getComponent("a-button"); // ID für A-Taste
+                if (aButtonComponent) {
+                    console.log("A-Button Komponente gefunden.");
+                    aButtonComponent.onButtonStateChangedObservable.add((component) => {
+                        // 'component' ist hier wieder die aButtonComponent
+                        // component.pressed -> true, wenn gedrückt, false, wenn losgelassen
+                        // component.value   -> 0 oder 1 für Buttons, 0 bis 1 für Trigger/Achsen
+                        if (component.pressed) {
+                            console.log("A-Taste GEDRÜCKT!");
+                            // Deine Aktion hier, wenn A gedrückt wird
+                            // z.B. ein Objekt erstellen, Menü öffnen, etc.
+
+                            // Beispiel: Hintergrundfarbe kurz ändern
+                            scene.clearColor = new BABYLON.Color3(0, 1, 0); // Grün
+                            setTimeout(() => { scene.clearColor = new BABYLON.Color4(0, 0, 0, 0); }, 200); // Zurück nach 200ms (assuming transparent bg)
+
+                        } else {
+                            console.log("A-Taste LOSGELASSEN!");
+                            // Deine Aktion hier, wenn A losgelassen wird
+                        }
+                    });
+                } else {
+                    console.warn("Keine A-Button Komponente auf diesem Controller gefunden.");
+                }
+
+                // --- Beispiel: Trigger ---
+                const triggerComponent = motionController.getComponent("xr-standard-trigger"); // ID für Trigger
+                if (triggerComponent) {
+                    console.log("Trigger Komponente gefunden.");
+                    triggerComponent.onButtonStateChangedObservable.add((component) => {
+                        // Bei Triggern ist auch component.value interessant (0.0 bis 1.0)
+                        console.log(`Trigger Zustand geändert: Pressed=${component.pressed}, Value=${component.value.toFixed(2)}`);
+                        if (component.pressed) { // Äquivalent zu value > threshold (oft 0.1 oder so)
+                            console.log("Trigger GEDRÜCKT!");
+                            // Aktion für Trigger-Druck
+                        } else {
+                            console.log("Trigger LOSGELASSEN!");
+                        }
+                    });
+                } else {
+                    console.warn("Keine Trigger Komponente auf diesem Controller gefunden.");
+                }
+
+                // --- Beispiel: Grip (Seitentaste) ---
+                const gripComponent = motionController.getComponent("xr-standard-squeeze"); // ID für Grip/Squeeze
+                if (gripComponent) {
+                    console.log("Grip Komponente gefunden.");
+                    gripComponent.onButtonStateChangedObservable.add((component) => {
+                        console.log(`Grip Zustand geändert: Pressed=${component.pressed}, Value=${component.value.toFixed(2)}`);
+                        if (component.pressed) {
+                            console.log("Grip GEDRÜCKT!");
+                            // Aktion für Grip-Druck
+                        } else {
+                            console.log("Grip LOSGELASSEN!");
+                        }
+                    });
+                } else {
+                    console.warn("Keine Grip Komponente auf diesem Controller gefunden.");
+                }
+
+                // --- Finde ALLE Komponenten heraus ---
+                // motionController.getComponentIds().forEach(id => {
+                //     console.log("Verfügbare Komponenten-ID:", id);
+                //     const comp = motionController.getComponent(id);
+                //     // Hier könntest du für jede Komponente einen Listener hinzufügen oder Zustände abfragen
+                // });
+
+            }); // Ende onMotionControllerInitObservable
+        }); // Ende onControllerAddedObservable
+
+        // Optional: Listener für das Entfernen von Controllern
+        xr.baseExperience.inputManager.onControllerRemovedObservable.add((inputSource) => {
+            console.log("Controller entfernt:", inputSource.uniqueId);
+            // Hier könntest du ggf. Aufräumarbeiten machen, falls nötig
+        });
+
+    } else {
+        console.error("XR Experience oder Input Manager nicht initialisiert!");
+    }
+
+    // CREATE Objects, MODE = 0
     scene.onPointerDown = (evt, pickInfo) => {
         // Prüfen ob wir in XR sind und ein gültiger Hit-Test vorliegt
         // Verwende die *lokale* Variable 'xr' und 'hitTest'
-        if (xr.baseExperience.state === BABYLON.WebXRState.IN_XR && hitTest && defaultObject) {
+        if (mode = 0 && xr.baseExperience.state === BABYLON.WebXRState.IN_XR && hitTest && defaultObject) {
+
+             // Klon erstellen vom *Reticle* (defaultObject)
+             // Weist das Ergebnis der *lokalen* Variable 'firstObject' zu
+             firstObject = defaultObject.clone("placedObject_" + Date.now()); // Eindeutiger Name
+
+             if (firstObject) {
+                 // Position und Rotation vom aktuellen Hit-Test übernehmen
+                 firstObject.position.copyFrom(hitTestPosition);
+                 if (firstObject.rotationQuaternion) {
+                     firstObject.rotationQuaternion.copyFrom(hitTestRotation);
+                 }
+
+                 // Sichtbar und ggf. pickable machen
+                 firstObject.isVisible = true;
+                 firstObject.isPickable = true; // Erlaube Interaktion mit platziertem Objekt
+
+                 // Platziertes Objekt manipulieren (z.B. Größe ändern)
+                 manipulateObject(firstObject);
+
+                 // Optional: Nachricht oder Feedback geben
+                 console.log("Objekt platziert an:", firstObject.position);
+
+                 // Das Reticle (defaultObject) wird NICHT entfernt,
+                 // damit weitere Objekte platziert werden können.
+                 // defaultObject = null; // DIESE ZEILE WURDE ENTFERNT/AUSKOMMENTIERT
+
+                 // Hit-Test zurücksetzen, um Doppelplatzierung bei schnellem Klick zu vermeiden?
+                 // hitTest = undefined; // Optional, je nach gewünschtem Verhalten
+                 // if (defaultObject) defaultObject.isVisible = false; // Optional Reticle kurz ausblenden
+
+             } else {
+                 console.error("Klonen des Objekts fehlgeschlagen.");
+             }
+        }
+        // Hier könnte Logik für Klicks außerhalb von XR oder auf GUI-Elemente stehen
+        // console.log("Pointer Down Event:", evt, pickInfo);
+    };
+
+    
+    // MANIPULATE Objects, MODE = 1
+    scene.onPointerDown = (evt, pickInfo) => {
+        // Prüfen ob wir in XR sind und ein gültiger Hit-Test vorliegt
+        // Verwende die *lokale* Variable 'xr' und 'hitTest'
+        if (mode = 1 && xr.baseExperience.state === BABYLON.WebXRState.IN_XR && hitTest && defaultObject) {
 
              // Klon erstellen vom *Reticle* (defaultObject)
              // Weist das Ergebnis der *lokalen* Variable 'firstObject' zu
