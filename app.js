@@ -50,6 +50,12 @@ const createScene = async function () {
     var light2 = new BABYLON.PointLight("light2", new BABYLON.Vector3(0, 5, -5), scene); // Position angepasst
     light2.intensity = 1.5; // Intensität angepasst
 
+            
+    var testLight = new BABYLON.HemisphericLight("testLight", new BABYLON.Vector3(0, 1, 0), scene);
+    testLight.intensity = 5;
+
+    
+
     // Prüfen, ob AR unterstützt wird
     const arAvailable = await BABYLON.WebXRSessionManager.IsSessionSupportedAsync('immersive-ar');
 
@@ -106,6 +112,7 @@ const createScene = async function () {
              // Annahme: Originalgröße war die des Reticles (0.2, 0.1, 0.05)
              // Skaliere es z.B. auf das 10-fache
              obj.scaling = new BABYLON.Vector3(10, 10, 10);
+             mode = 1;
         } else {
             console.warn("ManipulateObject: Ungültiges Objekt übergeben:", obj);
         }
@@ -309,6 +316,10 @@ const createScene = async function () {
                  // Sichtbar und ggf. pickable machen
                  firstObject.isVisible = true;
                  firstObject.isPickable = true; // Erlaube Interaktion mit platziertem Objekt
+                 let placedObjectMaterial = new BABYLON.StandardMaterial("placedMat", scene);
+                placedObjectMaterial.diffuseColor = new BABYLON.Color3(0, 1, 0); // z.B. Rot zum Testen
+                // Stelle sicher, dass dieses Material Licht nutzt (Standard)
+                firstObject.material = placedObjectMaterial;
 
                  // Platziertes Objekt manipulieren (z.B. Größe ändern)
                  manipulateObject(firstObject);
@@ -341,35 +352,14 @@ const createScene = async function () {
 
              // Klon erstellen vom *Reticle* (defaultObject)
              // Weist das Ergebnis der *lokalen* Variable 'firstObject' zu
-             firstObject = defaultObject.clone("placedObject_" + Date.now()); // Eindeutiger Name
+             let placedObjectMaterial = new BABYLON.StandardMaterial("placedMat", scene);
+             placedObjectMaterial.diffuseColor = new BABYLON.Color3(1, 0, 0); // z.B. Rot zum Testen
+             // Stelle sicher, dass dieses Material Licht nutzt (Standard)
+             firstObject.material = placedObjectMaterial;
 
-             if (firstObject) {
-                 // Position und Rotation vom aktuellen Hit-Test übernehmen
-                 firstObject.position.copyFrom(hitTestPosition);
-                 if (firstObject.rotationQuaternion) {
-                     firstObject.rotationQuaternion.copyFrom(hitTestRotation);
-                 }
-
-                 // Sichtbar und ggf. pickable machen
-                 firstObject.isVisible = true;
-                 firstObject.isPickable = true; // Erlaube Interaktion mit platziertem Objekt
-
-                 // Platziertes Objekt manipulieren (z.B. Größe ändern)
-                 manipulateObject(firstObject);
-
-                 // Optional: Nachricht oder Feedback geben
-                 console.log("Objekt platziert an:", firstObject.position);
-
-                 // Das Reticle (defaultObject) wird NICHT entfernt,
-                 // damit weitere Objekte platziert werden können.
-                 // defaultObject = null; // DIESE ZEILE WURDE ENTFERNT/AUSKOMMENTIERT
-
-                 // Hit-Test zurücksetzen, um Doppelplatzierung bei schnellem Klick zu vermeiden?
-                 // hitTest = undefined; // Optional, je nach gewünschtem Verhalten
-                 // if (defaultObject) defaultObject.isVisible = false; // Optional Reticle kurz ausblenden
 
              } else {
-                 console.error("Klonen des Objekts fehlgeschlagen.");
+                 console.error("fehlgeschlagen.");
              }
         }
         // Hier könnte Logik für Klicks außerhalb von XR oder auf GUI-Elemente stehen
