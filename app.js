@@ -4,7 +4,7 @@ var engine = null; // Babylon 3D engine deklaration
 var sceneToRender = null; // Szene, die gerendert werden soll
 var scene; // Globale Szene-Variable, wird in initializeApp gesetzt
 
-let mode = 0; // 0 = CREATE, 1 = MANIPULATE
+let mode = 0;
 
 // Funktion zum Starten der Render-Schleife
 var startRenderLoop = function (engine, canvas) {
@@ -32,7 +32,7 @@ const createScene = async function () {
 
     // === Lokale Variablen für diese Szene ===
     let defaultObject = null; // Das Reticle/Platzierungsobjekt
-    let firstObject = null; // Das erste platzierte Objekt
+    let firstObject = null; // Das erste platzierte Objekt (könnte zu einer Liste werden)
     let hitTest = undefined;
     let hitTestPosition = new BABYLON.Vector3();
     let hitTestRotation = new BABYLON.Quaternion();
@@ -46,31 +46,33 @@ const createScene = async function () {
     camera.attachControl(canvas, true); // Kamera an das Canvas binden
 
     // Lichtquellen erstellen
-    var light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 10, 0), scene);
-    light.intensity = 1.7;
-    var light2 = new BABYLON.PointLight("light2", new BABYLON.Vector3(0, 5, -5), scene);
-    light2.intensity = 1.5;
+    var light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 10, 0), scene); // Position angepasst
+    light.intensity = 1.7; // Intensität angepasst
+    var light2 = new BABYLON.PointLight("light2", new BABYLON.Vector3(0, 5, -5), scene); // Position angepasst
+    light2.intensity = 1.5; // Intensität angepasst
+
+
     var testLight = new BABYLON.HemisphericLight("testLight", new BABYLON.Vector3(0, 1, 0), scene);
-    testLight.intensity = 5; // Intensität wieder hochgesetzt zum Testen
+    testLight.intensity = 5;
+
+
 
     // Prüfen, ob AR unterstützt wird
     const arAvailable = await BABYLON.WebXRSessionManager.IsSessionSupportedAsync('immersive-ar');
 
     // GUI Elemente erstellen
-    const advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
-
-    // Start-Panel
-    const startUI_bg = new BABYLON.GUI.Rectangle("startRect");
+    const advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI"); // Name geändert
+    const startUI_bg = new BABYLON.GUI.Rectangle("startRect"); // Name geändert
     startUI_bg.background = "black";
     startUI_bg.color = "green";
     startUI_bg.width = "80%";
     startUI_bg.height = "50%";
     startUI_bg.isPointerBlocker = true;
-    startUI_bg.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER;
-    startUI_bg.isVisible = true;
+    startUI_bg.isVisible = true; // Explizit sichtbar machen am Anfang
+    startUI_bg.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER; // Vertikal zentrieren für bessere Sichtbarkeit
     advancedTexture.addControl(startUI_bg);
 
-    const nonXRPanel = new BABYLON.GUI.StackPanel("nonXRPanel");
+    const nonXRPanel = new BABYLON.GUI.StackPanel("nonXRPanel"); // Name geändert
     startUI_bg.addControl(nonXRPanel);
 
     const text1 = new BABYLON.GUI.TextBlock("text1");
@@ -78,12 +80,12 @@ const createScene = async function () {
     text1.textWrapping = true;
     text1.color = "white";
     text1.fontSize = "14px";
-    text1.height = "auto"; // Höhe auf auto
-    text1.paddingTop = "10px"; // Padding für Text
+    text1.height = "auto"; // Höhe automatisch anpassen
+    text1.paddingTop = "10px"; // Padding für Text im Panel
     text1.paddingBottom = "10px";
     text1.paddingLeft = "10px";
     text1.paddingRight = "10px";
-    nonXRPanel.addControl(text1);
+    nonXRPanel.addControl(text1); // Text zum Panel hinzufügen
 
     // *** NEU: "Fertig"-Button erstellen (initial unsichtbar) ***
     fertigButton = BABYLON.GUI.Button.CreateSimpleButton("fertigBtn", "Fertig");
@@ -91,134 +93,156 @@ const createScene = async function () {
     fertigButton.height = "40px";
     fertigButton.color = "white";
     fertigButton.background = "green";
-    fertigButton.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-    fertigButton.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
-    fertigButton.top = "-20px";
-    fertigButton.isVisible = false; // Initial unsichtbar
+    fertigButton.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM; // Unten platzieren
+    fertigButton.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER; // Horizontal zentrieren
+    fertigButton.top = "-20px"; // Kleiner Abstand vom unteren Rand
+    fertigButton.isVisible = false; // Wichtig: Initial unsichtbar
     advancedTexture.addControl(fertigButton);
 
     // *** NEU: Click-Handler für den "Fertig"-Button ***
     fertigButton.onPointerClickObservable.add(() => {
-        if (mode === 0) { // Nur ausführen, wenn wir noch im Create-Modus sind
-            console.log("Fertig Button geklickt! Wechsle zu Modus 1.");
-            mode = 1; // Modus auf MANIPULATE setzen
-            fertigButton.isVisible = false; // Button wieder ausblenden
+        // Nur ausführen, wenn der Button sichtbar ist (verhindert versehentliche Klicks)
+        // und wir noch im Modus 0 sind (logisch, da der Button nur dann sichtbar wird)
+        if (fertigButton.isVisible && mode === 0) {
+            console.log("Fertig Button geklickt! Setze mode = 1.");
+            mode = 1; // Setze den Modus auf 1
+            fertigButton.isVisible = false; // Blende den Button wieder aus
+            // Optional: Reticle ausblenden, da es im Modus 1 nicht gebraucht wird
             if (defaultObject) {
-                defaultObject.isVisible = false; // Reticle ausblenden
+                defaultObject.isVisible = false;
             }
-            if (text1) {
-                 text1.text = "Manipulationsmodus aktiv. Tippe, um die Farbe zu ändern.";
+             // Optional: UI Text aktualisieren
+             if (text1) {
+                text1.text = "Manipulationsmodus. Tippe zum Ändern der Farbe.";
             }
         }
     });
-    // ===========================================================
+    // =================================================================
 
-    // Funktion zur Erstellung des Standard-Objekts (Reticle)
+    // Funktion zur Erstellung des Standard-Objekts (Reticle), jetzt *innerhalb* von createScene
     function createStandardObj() {
         if (!defaultObject) {
-            defaultObject = BABYLON.MeshBuilder.CreateBox("standardBox", { width: 0.2, height: 0.1, depth: 0.05, updatable: true }, scene);
+            // Verwende die *lokale* 'scene' Variable
+            defaultObject = BABYLON.MeshBuilder.CreateBox("standardBox", { width: 0.2, height: 0.1, depth: 0.05, updatable: true }, scene); // Größe angepasst
             let standardObjMaterial = new BABYLON.StandardMaterial("reticleMaterial", scene);
             standardObjMaterial.diffuseColor = new BABYLON.Color3(0.5, 0.5, 1);
             standardObjMaterial.roughness = 1;
-            standardObjMaterial.disableLighting = true;
+            standardObjMaterial.disableLighting = true; // Oft sinnvoll für Reticles
             standardObjMaterial.backFaceCulling = false;
+
             defaultObject.material = standardObjMaterial;
             defaultObject.renderingGroupId = 1;
-            defaultObject.isVisible = false;
+            defaultObject.isVisible = false; // Unsichtbar bis erster Hit-Test
             defaultObject.isPickable = false;
+
             if (!defaultObject.rotationQuaternion) {
                 defaultObject.rotationQuaternion = BABYLON.Quaternion.Identity();
             }
         }
     }
 
-    // *** Überarbeitete Funktion zur Manipulation ***
+    // *** START DER ÄNDERUNG an manipulateObject ***
+    // Funktion zur Manipulation des platzierten Objekts, jetzt *innerhalb* von createScene
     function manipulateObject(obj) {
-        if (obj && obj.scaling) {
-             obj.scaling = new BABYLON.Vector3(10, 10, 10); // Skalieren
-             console.log("Objekt skaliert.");
-             // *** NEU: Button sichtbar machen ***
-             if (fertigButton && mode === 0) { // Button nur im Modus 0 sichtbar machen
+        if (obj && obj.scaling) { // Prüfen ob obj und scaling existieren
+             // Korrigiert: Verwende die 'scaling' Eigenschaft
+             // Annahme: Originalgröße war die des Reticles (0.2, 0.1, 0.05)
+             // Skaliere es z.B. auf das 10-fache
+             obj.scaling = new BABYLON.Vector3(10, 10, 10);
+             console.log("Objekt skaliert."); // Log beibehalten
+
+             // *** NEU: Mache den Button sichtbar ***
+             if (fertigButton) { // Stelle sicher, dass der Button existiert
                  fertigButton.isVisible = true;
-                 console.log("Fertig-Button sichtbar gemacht.");
+                 console.log("Fertig-Button sichtbar.");
+                 // Optional: Text aktualisieren
                  if (text1) {
-                     text1.text = "Objekt platziert und skaliert. Drücke 'Fertig'.";
+                     text1.text = "Objekt platziert. Drücke 'Fertig', um den Modus zu wechseln.";
                  }
              }
-             // *** ENTFERNT: mode = 1; *** // Wird jetzt durch Button-Klick gesetzt
+
+             // *** ENTFERNT: mode = 1; *** // Diese Zeile wurde entfernt wie gewünscht
         } else {
             console.warn("ManipulateObject: Ungültiges Objekt übergeben:", obj);
         }
     }
+    // *** ENDE DER ÄNDERUNG an manipulateObject ***
 
     // Text basierend auf AR-Verfügbarkeit setzen
     if (!arAvailable) {
         text1.text = "AR is not available in your system...";
-        return scene;
+        return scene; // Szene zurückgeben
     } else {
-        text1.text = "Willkommen. Finde eine Oberfläche und tippe, um ein Objekt zu platzieren.";
+        text1.text = "Willkommen. Möbel-Simulator 0.1 by Tom. Tippe auf den Bildschirm, um ein Objekt zu platzieren.";
     }
 
     // XR Experience Helper erstellen
+    // Weise das Ergebnis der lokalen Variable 'xr' zu
     xr = await scene.createDefaultXRExperienceAsync({
         uiOptions: {
             sessionMode: "immersive-ar",
             referenceSpaceType: "local-floor",
             onError: (error) => {
                 console.error("XR Session Error:", error);
-                alert("XR Error: " + error.message);
+                alert("XR Error: " + error.message); // Bessere Fehlermeldung
             }
         },
         optionalFeatures: true
     });
 
+    // Überprüfen, ob XR erfolgreich initialisiert wurde
     if (!xr || !xr.baseExperience) {
         console.error("XR Base Experience konnte nicht initialisiert werden.");
         text1.text = "Error initializing XR. Please check console.";
-        return scene;
+        return scene; // Szene trotzdem zurückgeben
     }
 
-    // Start-UI in XR ausblenden/einblenden und Zustände zurücksetzen
+    // Hide Start GUI in XR und Zustände zurücksetzen
     xr.baseExperience.sessionManager.onXRSessionInit.add(() => {
         startUI_bg.isVisible = false;
     });
     xr.baseExperience.sessionManager.onXRSessionEnded.add(() => {
         startUI_bg.isVisible = true;
         mode = 0; // Modus zurücksetzen
-        if (fertigButton) fertigButton.isVisible = false; // Button ausblenden
-        if(firstObject) {
+        // *** NEU: Button beim Verlassen von XR ausblenden ***
+        if (fertigButton) {
+            fertigButton.isVisible = false;
+        }
+        // *** Ende Neu ***
+        if(firstObject) { // Vorhandenes Objekt entfernen
             firstObject.dispose();
             firstObject = null;
         }
-        text1.text = "Willkommen. Finde eine Oberfläche und tippe, um ein Objekt zu platzieren.";
+        text1.text = "Willkommen. Möbel-Simulator 0.1 by Tom. Tippe auf den Bildschirm, um ein Objekt zu platzieren."; // Text zurücksetzen
     });
 
     const fm = xr.baseExperience.featuresManager;
 
-    // Hit-Test-Feature aktivieren
+    // Hit-Test-Feature aktivieren (falls verfügbar)
     const xrTest = fm.enableFeature(BABYLON.WebXRHitTest.Name, "latest");
     if (!xrTest) {
         console.warn("WebXR Hit Test Feature ist nicht verfügbar.");
         text1.text = "Hit-Test Feature nicht verfügbar. Platzierung nicht möglich.";
     } else {
-        // Hit-Test Ergebnisse verarbeiten
+        // Observable für Hit-Test-Ergebnisse hinzufügen
         xrTest.onHitTestResultObservable.add((results) => {
             if (results.length) {
-                hitTest = results[0];
+                hitTest = results[0]; // Lokale Variable aktualisieren
                 hitTest.transformationMatrix.decompose(undefined, hitTestRotation, hitTestPosition);
-                // Reticle nur anzeigen, wenn im CREATE-Modus (mode 0)
-                if (defaultObject) {
-                    // *** Reticle nur sichtbar wenn mode=0 UND Button unsichtbar ***
-                    defaultObject.isVisible = (mode === 0 && !fertigButton.isVisible);
-                    if(defaultObject.isVisible) { // Nur positionieren, wenn sichtbar
+
+                // *** Reticle Sichtbarkeit angepasst ***
+                if (defaultObject) { // Prüfen ob Reticle existiert
+                    // Reticle nur sichtbar, wenn mode=0 UND der Fertig-Button NICHT sichtbar ist
+                    defaultObject.isVisible = (mode === 0 && fertigButton && !fertigButton.isVisible);
+                    if (defaultObject.isVisible) { // Nur positionieren, wenn sichtbar
                         defaultObject.position.copyFrom(hitTestPosition);
-                        if (defaultObject.rotationQuaternion) {
-                            defaultObject.rotationQuaternion.copyFrom(hitTestRotation);
+                        if (defaultObject.rotationQuaternion) { // Sicherstellen, dass Quaternion existiert
+                             defaultObject.rotationQuaternion.copyFrom(hitTestRotation);
                         }
                     }
                 }
             } else {
-                hitTest = undefined;
+                hitTest = undefined; // Lokale Variable aktualisieren
                 if (defaultObject) {
                     defaultObject.isVisible = false;
                 }
@@ -226,53 +250,58 @@ const createScene = async function () {
         });
     }
 
-    // Controller Input verarbeiten (A-Taste etc.) - Unverändert
+    // Überprüfen, ob XR und die Input-Verwaltung verfügbar sind - CODE unverändert
     if (xr && xr.baseExperience && xr.baseExperience.inputManager) {
         xr.baseExperience.inputManager.onControllerAddedObservable.add((inputSource) => {
             console.log("Controller verbunden:", inputSource.uniqueId);
             inputSource.onMotionControllerInitObservable.add((motionController) => {
-                console.log("Motion Controller initialisiert:", motionController.profileId);
-                // A-Taste Handler
+                console.log("Motion Controller initialisiert für:", inputSource.uniqueId, "Profil:", motionController.profileId);
                 const aButtonComponent = motionController.getComponent("a-button");
                 if (aButtonComponent) {
+                    console.log("A-Button Komponente gefunden.");
                     aButtonComponent.onButtonStateChangedObservable.add((component) => {
                         if (component.pressed) {
                             console.log("A-Taste GEDRÜCKT!");
-                            if (defaultObject && defaultObject.material) {
-                                const mat = defaultObject.material as BABYLON.StandardMaterial;
-                                if (mat.diffuseColor) {
-                                    const originalColor = mat.diffuseColor.clone();
-                                    const flashColor = new BABYLON.Color3(0, 1, 0); // Grün
-                                    mat.diffuseColor = flashColor;
-                                    setTimeout(() => {
-                                        if (defaultObject && defaultObject.material) {
-                                            (defaultObject.material as BABYLON.StandardMaterial).diffuseColor = originalColor;
-                                        }
-                                    }, 200);
-                                }
+                            if (defaultObject && defaultObject.material && defaultObject.material.diffuseColor) {
+                                const originalColor = defaultObject.material.diffuseColor.clone();
+                                const flashColor = new BABYLON.Color3(0, 1, 0);
+                                defaultObject.material.diffuseColor = flashColor;
+                                setTimeout(() => {
+                                    if (defaultObject && defaultObject.material && defaultObject.material.diffuseColor) {
+                                        defaultObject.material.diffuseColor = originalColor;
+                                    }
+                                }, 200);
                             } else {
-                                console.warn("A-Taste: defaultObject oder Material nicht gefunden.");
+                                console.warn("Konnte Farbe von defaultObject nicht ändern. Objekt oder Material/diffuseColor fehlt?");
                             }
                         } else {
-                           console.log("A-Taste LOSGELASSEN!");
+                            console.log("A-Taste LOSGELASSEN!");
                         }
                     });
+                } else {
+                    console.warn("Keine A-Button Komponente auf diesem Controller gefunden.");
                 }
-                // Trigger Handler
                 const triggerComponent = motionController.getComponent("xr-standard-trigger");
                 if (triggerComponent) {
+                    console.log("Trigger Komponente gefunden.");
                     triggerComponent.onButtonStateChangedObservable.add((component) => {
-                        if (component.pressed) console.log("Trigger GEDRÜCKT! Value:", component.value.toFixed(2));
+                        console.log(`Trigger Zustand geändert: Pressed=${component.pressed}, Value=${component.value.toFixed(2)}`);
+                        if (component.pressed) console.log("Trigger GEDRÜCKT!");
                         else console.log("Trigger LOSGELASSEN!");
                     });
+                } else {
+                    console.warn("Keine Trigger Komponente auf diesem Controller gefunden.");
                 }
-                // Grip Handler
                 const gripComponent = motionController.getComponent("xr-standard-squeeze");
                 if (gripComponent) {
+                    console.log("Grip Komponente gefunden.");
                     gripComponent.onButtonStateChangedObservable.add((component) => {
-                        if (component.pressed) console.log("Grip GEDRÜCKT! Value:", component.value.toFixed(2));
+                        console.log(`Grip Zustand geändert: Pressed=${component.pressed}, Value=${component.value.toFixed(2)}`);
+                        if (component.pressed) console.log("Grip GEDRÜCKT!");
                         else console.log("Grip LOSGELASSEN!");
                     });
+                } else {
+                    console.warn("Keine Grip Komponente auf diesem Controller gefunden.");
                 }
             });
         });
@@ -283,22 +312,17 @@ const createScene = async function () {
         console.error("XR Experience oder Input Manager nicht initialisiert!");
     }
 
-    // === Pointer Down Handler (Tippen auf Bildschirm/Oberfläche) ===
+    // Pointer Down Handler - Logik angepasst
     scene.onPointerDown = (evt, pickInfo) => {
-        // Grundvoraussetzungen: In XR und gültiger Hit-Test vorhanden?
-        if (xr.baseExperience.state === BABYLON.WebXRState.IN_XR && hitTest) {
-
-            // Modus 0: Objekt erstellen und skalieren, Button anzeigen
-            if (mode === 0 && defaultObject && !fertigButton.isVisible) { // Nur ausführen, wenn Button noch nicht sichtbar ist
+        if (xr.baseExperience.state === BABYLON.WebXRState.IN_XR && hitTest) { // Hit-Test muss gültig sein
+            // Modus 0: Objekt erstellen, nur wenn Button NICHT sichtbar ist
+            if (mode === 0 && defaultObject && fertigButton && !fertigButton.isVisible) { // Zusätzliche Prüfung auf Button
                  console.log("Pointer Down im Modus 0 (CREATE)");
-                 // Nur ein Objekt erlauben (altes ggf. entfernen)
-                 if (firstObject) {
+                 if (firstObject) { // Altes Objekt entfernen
                      firstObject.dispose();
                      firstObject = null;
                  }
-                 // Klon erstellen vom Reticle
                  firstObject = defaultObject.clone("placedObject_" + Date.now());
-
                  if (firstObject) {
                      firstObject.position.copyFrom(hitTestPosition);
                      if (firstObject.rotationQuaternion) {
@@ -306,87 +330,68 @@ const createScene = async function () {
                      }
                      firstObject.isVisible = true;
                      firstObject.isPickable = true;
-                     // Neues Material, das auf Licht reagiert
                      let placedObjectMaterial = new BABYLON.StandardMaterial("placedMat", scene);
-                     placedObjectMaterial.diffuseColor = new BABYLON.Color3(0, 1, 0); // Startfarbe Grün
-                     firstObject.material = placedObjectMaterial;
-
-                     // Objekt initial skalieren & Button anzeigen (ändert Modus NICHT)
-                     manipulateObject(firstObject);
-
+                     placedObjectMaterial.diffuseColor = new BABYLON.Color3(0, 1, 0); // Grün
+                     firstObject.material = placedObjectMaterial; // Licht reagierendes Material
+                     manipulateObject(firstObject); // Skalieren & Button anzeigen
                  } else {
                      console.error("Klonen des Objekts fehlgeschlagen.");
                  }
             }
-            // Modus 1: Platziertes Objekt manipulieren (Farbe ändern)
+            // Modus 1: Objekt manipulieren (Farbe ändern)
             else if (mode === 1) {
                 console.log("Pointer Down im Modus 1 (MANIPULATE)");
-                // Prüfen, ob bereits ein Objekt platziert wurde
                 if (firstObject && firstObject.material) {
-                     console.log("Ändere Farbe von firstObject");
-                     // Farbe ändern (Beispiel: Rot) - Unverändert zu deinem Code
-                     let placedObjectMaterial = new BABYLON.StandardMaterial("placedMat_Mode1", scene); // Neuer Name für Material
-                     placedObjectMaterial.diffuseColor = new BABYLON.Color3(1, 0, 0);
-                     firstObject.material = placedObjectMaterial;
-                     console.log("Objekt neu eingefärbt."); // Dein Log-Text
+                    // Dein Code zum Ändern der Farbe
+                    let placedObjectMaterial = new BABYLON.StandardMaterial("placedMat_Mode1", scene); // Eigener Name für Material
+                    placedObjectMaterial.diffuseColor = new BABYLON.Color3(1, 0, 0); // z.B. Rot
+                    firstObject.material = placedObjectMaterial;
+                    console.log("Objekt neu eingefärbt."); // Dein Log
                 } else {
                      console.warn("Modus 1: Kein platziertes Objekt (firstObject) zum Manipulieren gefunden.");
                 }
             }
-            // else { console.log("Pointer Down im Modus:", mode); }
-
         } else {
-            // Klick ignorieren, wenn nicht in XR oder kein Hit-Test
             console.log("Pointer Down ignoriert (Nicht in XR oder kein Hit-Test). State:", xr?.baseExperience?.state, "HitTest:", !!hitTest);
         }
     }; // Ende scene.onPointerDown
 
-    // Reticle initial erstellen
+    // Reticle initial erstellen (unverändert)
     createStandardObj();
 
-    // Wichtig: Die erstellte Szene zurückgeben
+    // Wichtig: Die erstellte *lokale* Szene zurückgeben
     return scene;
 }; // Ende createScene
 
-// Event Listener für die Größenänderung des Fensters
+// Event Listener für die Größenänderung des Fensters (unverändert)
 window.addEventListener("resize", function () {
     if (engine) {
         engine.resize();
     }
 });
 
-// Szene starten
+// Szene starten (unverändert)
 async function initializeApp() {
     try {
-        console.log("Initialisiere App...");
         engine = createDefaultEngine();
-        if (!engine) throw new Error('Engine konnte nicht erstellt werden');
-        console.log("Engine erstellt.");
-
+        if (!engine) throw new Error('Engine could not be created');
         scene = await createScene();
-        if (!scene) throw new Error('Szene konnte nicht erstellt werden');
-        console.log("Szene erstellt.");
-
+        if (!scene) throw new Error('Scene could not be created');
         sceneToRender = scene;
-
         startRenderLoop(engine, canvas);
-        console.log("Render Loop gestartet.");
-
     } catch (e) {
-        console.error("Initialisierungsfehler:", e);
-        // Zeige Fehler im UI an
+        console.error("Initialization failed:", e);
         const errorDiv = document.createElement('div');
         errorDiv.style.position = 'absolute';
         errorDiv.style.top = '10px';
         errorDiv.style.left = '10px';
         errorDiv.style.padding = '10px';
-        errorDiv.style.backgroundColor = 'rgba(255, 0, 0, 0.8)';
+        errorDiv.style.backgroundColor = 'red';
         errorDiv.style.color = 'white';
-        errorDiv.style.zIndex = "1000";
-        errorDiv.textContent = 'FEHLER BEI INITIALISIERUNG: ' + e.message;
+        errorDiv.textContent = 'Initialization Failed: ' + e.message;
         document.body.appendChild(errorDiv);
     }
 }
 
-// App starten, wenn das DOM geladen ist
+// App starten, wenn das DOM geladen ist (unverändert)
 document.addEventListener("DOMContentLoaded", initializeApp);
