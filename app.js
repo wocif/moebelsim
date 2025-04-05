@@ -52,7 +52,7 @@ const createScene = async function () {
 
             
     var testLight = new BABYLON.HemisphericLight("testLight", new BABYLON.Vector3(0, 1, 0), scene);
-    testLight.intensity = 5;
+    testLight.intensity = 1;
 
     
 
