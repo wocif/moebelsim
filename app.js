@@ -1,7 +1,6 @@
 // Grundlegende Variablen-Deklarationen
 var canvas = document.getElementById("renderCanvas");
 var engine = null; // Babylon 3D engine deklaration
-var scene = null; // Babylon 3D scene deklaration
 var sceneToRender = null; // Szene, die gerendert werden soll
 
 // Variable für das Reticle-Mesh deklarieren (außerhalb der Funktion, damit sie bestehen bleibt)
@@ -31,7 +30,7 @@ var createDefaultEngine = function () {
 function createReticle() {
     // Nur erstellen, wenn es noch nicht existiert
     if (!defaultObject) {
-        defaultObject = BABYLON.MeshBuilder.CreateSphere("standardBox", { width: 1, height: 0.5, depth: 0.3, updatable: true }, scene); // Angepasste Größe
+        defaultObject = BABYLON.MeshBuilder.CreateBox("standardBox", { width: 1, height: 0.5, depth: 0.3, updatable: true }, scene); // Angepasste Größe
         let reticleMat = new BABYLON.StandardMaterial("reticleMaterial", scene);
         reticleMat.diffuseColor = new BABYLON.Color3(0.5, 0.5, 1); // Hellblau/Lila
         reticleMat.roughness = 1; // Matt
