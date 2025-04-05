@@ -52,7 +52,7 @@ const createScene = async function () {
 
             
     var testLight = new BABYLON.HemisphericLight("testLight", new BABYLON.Vector3(0, 1, 0), scene);
-    testLight.intensity = 1;
+    testLight.intensity = 5;
 
     
 
@@ -296,67 +296,64 @@ const createScene = async function () {
         console.error("XR Experience oder Input Manager nicht initialisiert!");
     }
 
-    // CREATE Objects, MODE = 0 = CREATE, 1 = MANIPULATE
-    scene.onPointerDown = (evt, pickInfo) => {
-        // Prüfen ob wir in XR sind und ein gültiger Hit-Test vorliegt
-        // Verwende die *lokale* Variable 'xr' und 'hitTest'
-        if (mode == 0 && xr.baseExperience.state === BABYLON.WebXRState.IN_XR && hitTest && defaultObject) {
+    // CREATE Objects, MODE = 0
+scene.onPointerDown = (evt, pickInfo) => {
+        // Gemeinsame Bedingung: In XR und Hit-Test vorhanden?
+        if (xr.baseExperience.state === BABYLON.WebXRState.IN_XR && hitTest && defaultObject) {
 
-             // Klon erstellen vom *Reticle* (defaultObject)
-             // Weist das Ergebnis der *lokalen* Variable 'firstObject' zu
-             firstObject = defaultObject.clone("placedObject_" + Date.now()); // Eindeutiger Name
+            // Modus 0: Objekt erstellen
+            if (mode === 0) {
+                 console.log("Pointer Down im Modus 0");
+                 // Klon erstellen vom *Reticle* (defaultObject)
+                 firstObject = defaultObject.clone("placedObject_" + Date.now());
 
-             if (firstObject) {
-                 // Position und Rotation vom aktuellen Hit-Test übernehmen
-                 firstObject.position.copyFrom(hitTestPosition);
-                 if (firstObject.rotationQuaternion) {
-                     firstObject.rotationQuaternion.copyFrom(hitTestRotation);
+                 if (firstObject) {
+                     // Position und Rotation vom aktuellen Hit-Test übernehmen
+                     firstObject.position.copyFrom(hitTestPosition);
+                     if (firstObject.rotationQuaternion) {
+                         firstObject.rotationQuaternion.copyFrom(hitTestRotation);
+                     }
+
+                     // Sichtbar und ggf. pickable machen
+                     firstObject.isVisible = true;
+                     firstObject.isPickable = true;
+                     let placedObjectMaterial = new BABYLON.StandardMaterial("placedMat", scene);
+                     placedObjectMaterial.diffuseColor = new BABYLON.Color3(0, 1, 0); // Grün
+                     firstObject.material = placedObjectMaterial;
+
+                     // Objekt manipulieren (skalieren) und Modus wechseln
+                     manipulateObject(firstObject); // Wechselt intern mode auf 1
+
+                     console.log("Objekt platziert und Modus auf 1 gewechselt.");
+
+                 } else {
+                     console.error("Klonen des Objekts fehlgeschlagen.");
                  }
-
-                 // Sichtbar und ggf. pickable machen
-                 firstObject.isVisible = true;
-                 firstObject.isPickable = true; // Erlaube Interaktion mit platziertem Objekt
-                 let placedObjectMaterial = new BABYLON.StandardMaterial("placedMat", scene);
-                placedObjectMaterial.diffuseColor = new BABYLON.Color3(0, 1, 0); // z.B. Rot zum Testen
-                // Stelle sicher, dass dieses Material Licht nutzt (Standard)
-                firstObject.material = placedObjectMaterial;
-
-                 // Platziertes Objekt manipulieren (z.B. Größe ändern)
-                 manipulateObject(firstObject);
-
-                 // Optional: Nachricht oder Feedback geben
-                 console.log("Objekt platziert an:", firstObject.position);
-
-                 // Das Reticle (defaultObject) wird NICHT entfernt,
-                 // damit weitere Objekte platziert werden können.
-                 // defaultObject = null; // DIESE ZEILE WURDE ENTFERNT/AUSKOMMENTIERT
-
-                 // Hit-Test zurücksetzen, um Doppelplatzierung bei schnellem Klick zu vermeiden?
-                 // hitTest = undefined; // Optional, je nach gewünschtem Verhalten
-                 // if (defaultObject) defaultObject.isVisible = false; // Optional Reticle kurz ausblenden
-
-             } else {
-                 console.error("Klonen des Objekts fehlgeschlagen.");
-             }
-             if (mode == 1 && xr.baseExperience.state === BABYLON.WebXRState.IN_XR && hitTest && defaultObject) {
-
-                // Klon erstellen vom *Reticle* (defaultObject)
-                // Weist das Ergebnis der *lokalen* Variable 'firstObject' zu
-                let placedObjectMaterial = new BABYLON.StandardMaterial("placedMat", scene);
-                placedObjectMaterial.diffuseColor = new BABYLON.Color3(1, 0, 0); // z.B. Rot zum Testen
-                // Stelle sicher, dass dieses Material Licht nutzt (Standard)
-                firstObject.material = placedObjectMaterial;
-   
-   
+            }
+            // Modus 1: Objekt manipulieren (z.B. Farbe ändern)
+            else if (mode === 1) {
+                console.log("Pointer Down im Modus 1");
+                // Prüfen, ob bereits ein Objekt platziert wurde
+                if (firstObject && firstObject.material) {
+                    // Beispiel: Farbe ändern bei Klick im Modus 1
+                    let placedObjectMaterial = new BABYLON.StandardMaterial("placedMat", scene);
+                    placedObjectMaterial.diffuseColor = new BABYLON.Color3(1, 0, 0); // z.B. Rot zum Testen
+                    // Stelle sicher, dass dieses Material Licht nutzt (Standard)
+                    firstObject.material = placedObjectMaterial;
+                    console.log("Objekt neu eingefärbt.");
                 } else {
-                    console.error("fehlgeschlagen.");
+                     console.warn("Modus 1: Kein platziertes Objekt (firstObject) zum Manipulieren gefunden.");
                 }
-           }
-        }
-        // Hier könnte Logik für Klicks außerhalb von XR oder auf GUI-Elemente stehen
-        // console.log("Pointer Down Event:", evt, pickInfo);
-    };
+            }
+             // else { console.log("Unbekannter Modus:", mode); }
 
+        } else {
+            // Hier Logik für Klicks außerhalb von XR oder wenn kein Hit-Test vorhanden ist
+            console.log("Pointer Down außerhalb von XR oder kein Hit-Test.");
+        }
+    }; // Ende scene.onPointerDown
+
+    
 
     // ============================================================
 
@@ -365,7 +362,7 @@ const createScene = async function () {
 
     // Wichtig: Die erstellte *lokale* Szene zurückgeben
     return scene;
-};
+}
 
 // Event Listener für die Größenänderung des Fensters
 window.addEventListener("resize", function () {
