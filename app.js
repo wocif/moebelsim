@@ -68,14 +68,9 @@ const createScene = async function () {
     text1.paddingLeft = "10px"; // Linker Innenabstand
     text1.paddingRight = "10px"; // Rechter Innenabstand
 
-    xr.baseExperience.sessionManager.onXRSessionInit.add(() => { // TODO
-        rectangle.isVisible = false;
-    });
-    xr.baseExperience.sessionManager.onXRSessionEnded.add(() => {
-        rectangle.isVisible = true;
-    });
 
-    
+
+
 
     // Text basierend auf AR-Verfügbarkeit setzen
     if (!arAvailable) {
@@ -87,6 +82,10 @@ const createScene = async function () {
         text1.text = "Willkommen. Hole dir ein virtuelles Fenster zu einer virtuellen Welt in dein Zuhause. Platziere es entweder an Stelle eines echten vorhandenen Fensters oder stattdessen an Stelle einer Tür, um in die virtuelle Realität gänzlich abzutauchen. Vergewissere dich immer, ob es sicher ist, dich zu bewegen! Wir übernehmen keine Haftung. Mai Phuong Nguyen, Tom Schmidt, Informatik in Kultur und Gesundheit, Wintersemester 2024/25 HTW Berlin";
         nonXRPanel.addControl(text1);
     }
+
+
+
+
 
     // XR Experience Helper erstellen
     const xr = await scene.createDefaultXRExperienceAsync({
@@ -101,7 +100,13 @@ const createScene = async function () {
         optionalFeatures: true // Optionale Features aktivieren, falls verfügbar
     });
 
-
+    // Hide Start GUI in XR
+    xr.baseExperience.sessionManager.onXRSessionInit.add(() => { // TODO
+        rectangle.isVisible = false;
+    });
+    xr.baseExperience.sessionManager.onXRSessionEnded.add(() => {
+        rectangle.isVisible = true;
+    });
 
 
 
