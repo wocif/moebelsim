@@ -8,7 +8,7 @@ var scene;
 let defaultObject = null;
 
 let firstObject = null;
-firstObject.isVisible = false;
+//firstObject.isVisible = false;
 
 
 
@@ -57,25 +57,7 @@ function createStandardObj() {
     }
 }
 
-scene.onPointerDown = (evt, pickInfo) => {
-    //zuerst wird geprüft, ob man sich in einer WebXR-Session befindet
-    if (xr.baseExperience.state === BABYLON.WebXRState.IN_XR) {
 
-        if (defaultObject != null && hitTest) {
-            firstObject.copyFrom(defaultObject); //setze die Position des Reticles auf die des Markers
-
-            defaultObject = null;
-            manipulateObject(firstObject);
-        }
-    }
-}
-
-function manipulateObject(obj) {
-    obj.width = 2;
-    obj.height = 2;
-    obj.depth = 2;
-    createStandardObj();
-}
 
 
 
@@ -222,6 +204,26 @@ const createScene = async function () {
     // Wichtig: Die erstellte Szene zurückgeben
     return scene;
 };
+
+scene.onPointerDown = (evt, pickInfo) => {
+    //zuerst wird geprüft, ob man sich in einer WebXR-Session befindet
+    if (xr.baseExperience.state === BABYLON.WebXRState.IN_XR) {
+
+        if (defaultObject != null && hitTest) {
+            firstObject.copyFrom(defaultObject); //setze die Position des Reticles auf die des Markers
+
+            defaultObject = null;
+            manipulateObject(firstObject);
+        }
+    }
+}
+
+function manipulateObject(obj) {
+    obj.width = 2;
+    obj.height = 2;
+    obj.depth = 2;
+    createStandardObj();
+}
 
 // Event Listener für die Größenänderung des Fensters
 window.addEventListener("resize", function () {
