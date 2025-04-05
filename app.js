@@ -2,6 +2,7 @@
 var canvas = document.getElementById("renderCanvas");
 var engine = null; // Babylon 3D engine deklaration
 var sceneToRender = null; // Szene, die gerendert werden soll
+var scene;
 
 // Variable für das Reticle-Mesh deklarieren (außerhalb der Funktion, damit sie bestehen bleibt)
 let defaultObject = null;
