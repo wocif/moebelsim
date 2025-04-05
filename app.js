@@ -79,7 +79,7 @@ const createScene = async function () {
         // Wichtig: Szene zurückgeben, auch wenn AR nicht verfügbar ist
         return scene;
     } else {
-        text1.text = "Willkommen. Hole dir ein virtuelles Fenster zu einer virtuellen Welt in dein Zuhause. Platziere es entweder an Stelle eines echten vorhandenen Fensters oder stattdessen an Stelle einer Tür, um in die virtuelle Realität gänzlich abzutauchen. Vergewissere dich immer, ob es sicher ist, dich zu bewegen! Wir übernehmen keine Haftung. Mai Phuong Nguyen, Tom Schmidt, Informatik in Kultur und Gesundheit, Wintersemester 2024/25 HTW Berlin";
+        text1.text = "Willkommen. Möbel-Simulator 0.1 by Tom Schmidt";
         nonXRPanel.addControl(text1);
     }
 
@@ -163,7 +163,8 @@ const createScene = async function () {
     function createReticle() {
         // Nur erstellen, wenn es noch nicht existiert
         if (!reticleMesh) {
-            reticleMesh = BABYLON.MeshBuilder.CreatePlane("reticleMesh", { width: 0.2, height: 0.2 }, scene); // Angepasste Größe
+            let size = 1;
+            reticleMesh = BABYLON.MeshBuilder.createBox("reticleMesh", {size, updatable, sideOrientation}, scene); // Angepasste Größe
             let reticleMat = new BABYLON.StandardMaterial("reticleMaterial", scene);
             reticleMat.diffuseColor = new BABYLON.Color3(0.5, 0.5, 1); // Hellblau/Lila
             reticleMat.roughness = 1; // Matt
