@@ -7,6 +7,11 @@ var scene;
 // Variable für das Reticle-Mesh deklarieren (außerhalb der Funktion, damit sie bestehen bleibt)
 let defaultObject = null;
 
+let firstObject = null;
+firstObject.isVisible = false;
+
+
+
 // Funktion zum Starten der Render-Schleife
 var startRenderLoop = function (engine, canvas) {
     engine.runRenderLoop(function () {
@@ -28,7 +33,7 @@ var createDefaultEngine = function () {
 
 
 // Funktion zur Erstellung des Reticles (Zielkreuz/Platzierungsanzeige)
-function createReticle() {
+function createStandardObj() {
     // Nur erstellen, wenn es noch nicht existiert
     if (!defaultObject) {
         defaultObject = BABYLON.MeshBuilder.CreateBox("standardBox", { width: 1, height: 0.5, depth: 0.3, updatable: true }, scene); // Angepasste Größe
@@ -50,6 +55,26 @@ function createReticle() {
         }
             // Skalierung bleibt Standard (1, 1, 1) durch MeshBuilder
     }
+}
+
+scene.onPointerDown = (evt, pickInfo) => {
+    //zuerst wird geprüft, ob man sich in einer WebXR-Session befindet
+    if (xr.baseExperience.state === BABYLON.WebXRState.IN_XR) {
+
+        if (defaultObject != null && hitTest) {
+            firstObject.copyFrom(defaultObject); //setze die Position des Reticles auf die des Markers
+
+            defaultObject = null;
+            manipulateObject(firstObject);
+        }
+    }
+}
+
+function manipulateObject(obj) {
+    obj.width = 2;
+    obj.height = 2;
+    obj.depth = 2;
+    createStandardObj();
 }
 
 
@@ -192,7 +217,7 @@ const createScene = async function () {
 
 
     // Reticle erstellen (die Funktion wird hier definiert, aber noch nicht aufgerufen)
-    createReticle();
+    createStandardObj();
 
     // Wichtig: Die erstellte Szene zurückgeben
     return scene;
