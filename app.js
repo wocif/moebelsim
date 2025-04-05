@@ -296,11 +296,11 @@ const createScene = async function () {
         console.error("XR Experience oder Input Manager nicht initialisiert!");
     }
 
-    // CREATE Objects, MODE = 0
+    // CREATE Objects, MODE = 0 = CREATE, 1 = MANIPULATE
     scene.onPointerDown = (evt, pickInfo) => {
         // Prüfen ob wir in XR sind und ein gültiger Hit-Test vorliegt
         // Verwende die *lokale* Variable 'xr' und 'hitTest'
-        if (mode = 0 && xr.baseExperience.state === BABYLON.WebXRState.IN_XR && hitTest && defaultObject) {
+        if (mode == 0 && xr.baseExperience.state === BABYLON.WebXRState.IN_XR && hitTest && defaultObject) {
 
              // Klon erstellen vom *Reticle* (defaultObject)
              // Weist das Ergebnis der *lokalen* Variable 'firstObject' zu
@@ -338,33 +338,26 @@ const createScene = async function () {
              } else {
                  console.error("Klonen des Objekts fehlgeschlagen.");
              }
+             if (mode == 1 && xr.baseExperience.state === BABYLON.WebXRState.IN_XR && hitTest && defaultObject) {
+
+                // Klon erstellen vom *Reticle* (defaultObject)
+                // Weist das Ergebnis der *lokalen* Variable 'firstObject' zu
+                let placedObjectMaterial = new BABYLON.StandardMaterial("placedMat", scene);
+                placedObjectMaterial.diffuseColor = new BABYLON.Color3(1, 0, 0); // z.B. Rot zum Testen
+                // Stelle sicher, dass dieses Material Licht nutzt (Standard)
+                firstObject.material = placedObjectMaterial;
+   
+   
+                } else {
+                    console.error("fehlgeschlagen.");
+                }
+           }
         }
         // Hier könnte Logik für Klicks außerhalb von XR oder auf GUI-Elemente stehen
         // console.log("Pointer Down Event:", evt, pickInfo);
     };
 
-    
-    // MANIPULATE Objects, MODE = 1
-    scene.onPointerDown = (evt, pickInfo) => {
-        // Prüfen ob wir in XR sind und ein gültiger Hit-Test vorliegt
-        // Verwende die *lokale* Variable 'xr' und 'hitTest'
-        if (mode = 1 && xr.baseExperience.state === BABYLON.WebXRState.IN_XR && hitTest && defaultObject) {
 
-             // Klon erstellen vom *Reticle* (defaultObject)
-             // Weist das Ergebnis der *lokalen* Variable 'firstObject' zu
-             let placedObjectMaterial = new BABYLON.StandardMaterial("placedMat", scene);
-             placedObjectMaterial.diffuseColor = new BABYLON.Color3(1, 0, 0); // z.B. Rot zum Testen
-             // Stelle sicher, dass dieses Material Licht nutzt (Standard)
-             firstObject.material = placedObjectMaterial;
-
-
-             } else {
-                 console.error("fehlgeschlagen.");
-             }
-        }
-        // Hier könnte Logik für Klicks außerhalb von XR oder auf GUI-Elemente stehen
-        // console.log("Pointer Down Event:", evt, pickInfo);
-    };
     // ============================================================
 
     // Reticle initial erstellen (ruft die lokale Funktion auf)
