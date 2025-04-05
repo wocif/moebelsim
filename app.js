@@ -82,13 +82,13 @@ const createScene = async function () {
         if (!defaultObject) {
             // Verwende die *lokale* 'scene' Variable
             defaultObject = BABYLON.MeshBuilder.CreateBox("standardBox", { width: 0.2, height: 0.1, depth: 0.05, updatable: true }, scene); // Größe angepasst
-            let reticleMat = new BABYLON.StandardMaterial("reticleMaterial", scene);
-            reticleMat.diffuseColor = new BABYLON.Color3(0.5, 0.5, 1);
-            reticleMat.roughness = 1;
-            reticleMat.disableLighting = true; // Oft sinnvoll für Reticles
-            reticleMat.backFaceCulling = false;
+            let standardObjMaterial = new BABYLON.StandardMaterial("reticleMaterial", scene);
+            standardObjMaterial.diffuseColor = new BABYLON.Color3(0.5, 0.5, 1);
+            standardObjMaterial.roughness = 1;
+            standardObjMaterial.disableLighting = true; // Oft sinnvoll für Reticles
+            standardObjMaterial.backFaceCulling = false;
 
-            defaultObject.material = reticleMat;
+            defaultObject.material = standardObjMaterial;
             defaultObject.renderingGroupId = 1;
             defaultObject.isVisible = false; // Unsichtbar bis erster Hit-Test
             defaultObject.isPickable = false;
@@ -199,16 +199,35 @@ const createScene = async function () {
                         // component.value   -> 0 oder 1 für Buttons, 0 bis 1 für Trigger/Achsen
                         if (component.pressed) {
                             console.log("A-Taste GEDRÜCKT!");
-                            // Deine Aktion hier, wenn A gedrückt wird
-                            // z.B. ein Objekt erstellen, Menü öffnen, etc.
-
-                            // Beispiel: Hintergrundfarbe kurz ändern
-                            scene.clearColor = new BABYLON.Color3(0, 1, 0); // Grün
-                            setTimeout(() => { scene.clearColor = new BABYLON.Color4(0, 0, 0, 0); }, 200); // Zurück nach 200ms (assuming transparent bg)
-
+    
+                            // --- ANFANG: Ersetze hiermit die scene.clearColor Zeilen ---
+                            if (defaultObject && defaultObject.material && defaultObject.material.diffuseColor) { // Prüfe ob Objekt, Material und Farbe existieren
+                                const originalColor = defaultObject.material.diffuseColor.clone(); // Wichtig: Klonen, um Referenzprobleme zu vermeiden
+                                const flashColor = new BABYLON.Color3(0, 1, 0); // Farbe für den Blitz (z.B. Grün)
+    
+                                // Farbe ändern
+                                defaultObject.material.diffuseColor = flashColor;
+                                // Optional: Log zur Bestätigung
+                                // console.log("defaultObject Farbe geändert zu", flashColor);
+    
+                                // Timeout zum Zurücksetzen der Farbe
+                                setTimeout(() => {
+                                    // Erneute Prüfung im Timeout, falls sich Objekt/Material geändert hat
+                                    if (defaultObject && defaultObject.material && defaultObject.material.diffuseColor) {
+                                        defaultObject.material.diffuseColor = originalColor; // Zurück zur Originalfarbe
+                                         // Optional: Log zur Bestätigung
+                                         // console.log("defaultObject Farbe zurückgesetzt zu", originalColor);
+                                    }
+                                }, 200); // Dauer des Farbwechsels in Millisekunden (z.B. 200ms)
+    
+                            } else {
+                                console.warn("Konnte Farbe von defaultObject nicht ändern. Objekt oder Material/diffuseColor fehlt?");
+                            }
+                            // --- ENDE: Ersetzung ---
+    
                         } else {
                             console.log("A-Taste LOSGELASSEN!");
-                            // Deine Aktion hier, wenn A losgelassen wird
+                            // Deine Aktion hier, wenn A losgelassen wird (bleibt unverändert)
                         }
                     });
                 } else {
