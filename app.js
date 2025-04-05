@@ -4,6 +4,9 @@ var engine = null; // Babylon 3D engine deklaration
 var scene = null; // Babylon 3D scene deklaration
 var sceneToRender = null; // Szene, die gerendert werden soll
 
+// Variable für das Reticle-Mesh deklarieren (außerhalb der Funktion, damit sie bestehen bleibt)
+let defaultObject = null;
+
 // Funktion zum Starten der Render-Schleife
 var startRenderLoop = function (engine, canvas) {
     engine.runRenderLoop(function () {
@@ -22,6 +25,34 @@ var createDefaultEngine = function () {
         disableWebGL2Support: false // WebGL2-Unterstützung aktivieren (falls verfügbar)
     });
 };
+
+
+// Funktion zur Erstellung des Reticles (Zielkreuz/Platzierungsanzeige)
+function createReticle() {
+    // Nur erstellen, wenn es noch nicht existiert
+    if (!defaultObject) {
+        defaultObject = BABYLON.MeshBuilder.CreateSphere("standardBox", { width: 1, height: 0.5, depth: 0.3, updatable: true }, scene); // Angepasste Größe
+        let reticleMat = new BABYLON.StandardMaterial("reticleMaterial", scene);
+        reticleMat.diffuseColor = new BABYLON.Color3(0.5, 0.5, 1); // Hellblau/Lila
+        reticleMat.roughness = 1; // Matt
+        reticleMat.disableLighting = true; // Unbeeinflusst von Licht
+        reticleMat.backFaceCulling = false; // Rückseite sichtbar machen
+
+        // Korrigiert: Das erstellte Material 'reticleMat' verwenden
+        defaultObject.material = reticleMat;
+        defaultObject.renderingGroupId = 1; // Über anderen Objekten rendern (falls nötig)
+        defaultObject.isVisible = false; // Standardmäßig unsichtbar
+        defaultObject.isPickable = false; // Nicht anklickbar machen
+
+        // Sicherstellen, dass ein Quaternion für die Rotation vorhanden ist
+        if (!defaultObject.rotationQuaternion) {
+                defaultObject.rotationQuaternion = BABYLON.Quaternion.Identity();
+        }
+            // Skalierung bleibt Standard (1, 1, 1) durch MeshBuilder
+    }
+}
+
+
 
 // Asynchrone Funktion zur Erstellung der Szene
 const createScene = async function () {
@@ -48,16 +79,16 @@ const createScene = async function () {
     // GUI Elemente erstellen
     const advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("FullscreenUI");
 
-    const rectangle = new BABYLON.GUI.Rectangle("rect");
-    rectangle.background = "black"; // Hintergrundfarbe
-    rectangle.color = "green"; // Randfarbe
-    rectangle.width = "80%"; // Breite
-    rectangle.height = "50%"; // Höhe
-    rectangle.isPointerBlocker = true; // Verhindert, dass Klicks durch das GUI Element gehen
-    advancedTexture.addControl(rectangle);
+    const startUI_bg = new BABYLON.GUI.Rectangle("rect");
+    startUI_bg.background = "black"; // Hintergrundfarbe
+    startUI_bg.color = "green"; // Randfarbe
+    startUI_bg.width = "80%"; // Breite
+    startUI_bg.height = "50%"; // Höhe
+    startUI_bg.isPointerBlocker = true; // Verhindert, dass Klicks durch das GUI Element gehen
+    advancedTexture.addControl(startUI_bg);
 
     const nonXRPanel = new BABYLON.GUI.StackPanel(); // Panel für Inhalte, wenn kein XR verfügbar ist
-    rectangle.addControl(nonXRPanel);
+    startUI_bg.addControl(nonXRPanel);
 
     const text1 = new BABYLON.GUI.TextBlock("text1");
     text1.fontFamily = "Helvetica"; // Schriftart
@@ -102,10 +133,10 @@ const createScene = async function () {
 
     // Hide Start GUI in XR
     xr.baseExperience.sessionManager.onXRSessionInit.add(() => { // TODO
-        rectangle.isVisible = false;
+        startUI_bg.isVisible = false;
     });
     xr.baseExperience.sessionManager.onXRSessionEnded.add(() => {
-        rectangle.isVisible = true;
+        startUI_bg.isVisible = true;
     });
 
 
@@ -133,8 +164,7 @@ const createScene = async function () {
     let hitTestPosition = new BABYLON.Vector3(); // Deklariert und initialisiert
     let hitTestRotation = new BABYLON.Quaternion(); // Deklariert und initialisiert
 
-    // Variable für das Reticle-Mesh deklarieren (außerhalb der Funktion, damit sie bestehen bleibt)
-    let reticleMesh = null;
+
 
     // Observable für Hit-Test-Ergebnisse hinzufügen (nur wenn xrTest verfügbar ist)
     if (xrTest) {
@@ -144,16 +174,16 @@ const createScene = async function () {
                 // Position und Rotation aus der Transformationsmatrix extrahieren
                 hitTest.transformationMatrix.decompose(undefined, hitTestRotation, hitTestPosition);
                 // Optional: Hier Logik einfügen, um das Reticle zu positionieren/zeigen
-                if (reticleMesh) {
-                    reticleMesh.isVisible = true;
-                    reticleMesh.position.copyFrom(hitTestPosition);
-                    reticleMesh.rotationQuaternion = hitTestRotation;
+                if (defaultObject) {
+                    defaultObject.isVisible = true;
+                    defaultObject.position.copyFrom(hitTestPosition);
+                    defaultObject.rotationQuaternion = hitTestRotation;
                 }
             } else {
                 hitTest = undefined;
                 // Optional: Hier Logik einfügen, um das Reticle auszublenden
-                if (reticleMesh) {
-                    reticleMesh.isVisible = false;
+                if (defaultObject) {
+                    defaultObject.isVisible = false;
                 }
             }
         });
@@ -198,27 +228,3 @@ document.addEventListener("DOMContentLoaded", initializeApp);
 
 
 
-// Funktion zur Erstellung des Reticles (Zielkreuz/Platzierungsanzeige)
-function createReticle() {
-    // Nur erstellen, wenn es noch nicht existiert
-    if (!reticleMesh) {
-        reticleMesh = BABYLON.MeshBuilder.CreateSphere("standardBox", { width: 1, height: 0.5, depth: 0.3, updatable: true }, scene); // Angepasste Größe
-        let reticleMat = new BABYLON.StandardMaterial("reticleMaterial", scene);
-        reticleMat.diffuseColor = new BABYLON.Color3(0.5, 0.5, 1); // Hellblau/Lila
-        reticleMat.roughness = 1; // Matt
-        reticleMat.disableLighting = true; // Unbeeinflusst von Licht
-        reticleMat.backFaceCulling = false; // Rückseite sichtbar machen
-
-        // Korrigiert: Das erstellte Material 'reticleMat' verwenden
-        reticleMesh.material = reticleMat;
-        reticleMesh.renderingGroupId = 1; // Über anderen Objekten rendern (falls nötig)
-        reticleMesh.isVisible = false; // Standardmäßig unsichtbar
-        reticleMesh.isPickable = false; // Nicht anklickbar machen
-
-        // Sicherstellen, dass ein Quaternion für die Rotation vorhanden ist
-        if (!reticleMesh.rotationQuaternion) {
-                reticleMesh.rotationQuaternion = BABYLON.Quaternion.Identity();
-        }
-            // Skalierung bleibt Standard (1, 1, 1) durch MeshBuilder
-    }
-}
