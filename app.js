@@ -79,7 +79,7 @@ const createScene = async function () {
         // Wichtig: Szene zurückgeben, auch wenn AR nicht verfügbar ist
         return scene;
     } else {
-        text1.text = "Willkommen. Möbel-Simulator 0.1 by Tom Schmidt";
+        text1.text = "Willkommen. Möbel-Simulator 0.1 by Tom";
         nonXRPanel.addControl(text1);
     }
 
@@ -159,31 +159,7 @@ const createScene = async function () {
         });
     }
 
-    // Funktion zur Erstellung des Reticles (Zielkreuz/Platzierungsanzeige)
-    function createReticle() {
-        // Nur erstellen, wenn es noch nicht existiert
-        if (!reticleMesh) {
-            let size = 1;
-            reticleMesh = BABYLON.MeshBuilder.createBox("reticleMesh", {size, updatable, sideOrientation}, scene); // Angepasste Größe
-            let reticleMat = new BABYLON.StandardMaterial("reticleMaterial", scene);
-            reticleMat.diffuseColor = new BABYLON.Color3(0.5, 0.5, 1); // Hellblau/Lila
-            reticleMat.roughness = 1; // Matt
-            reticleMat.disableLighting = true; // Unbeeinflusst von Licht
-            reticleMat.backFaceCulling = false; // Rückseite sichtbar machen
 
-            // Korrigiert: Das erstellte Material 'reticleMat' verwenden
-            reticleMesh.material = reticleMat;
-            reticleMesh.renderingGroupId = 1; // Über anderen Objekten rendern (falls nötig)
-            reticleMesh.isVisible = false; // Standardmäßig unsichtbar
-            reticleMesh.isPickable = false; // Nicht anklickbar machen
-
-            // Sicherstellen, dass ein Quaternion für die Rotation vorhanden ist
-            if (!reticleMesh.rotationQuaternion) {
-                 reticleMesh.rotationQuaternion = BABYLON.Quaternion.Identity();
-            }
-             // Skalierung bleibt Standard (1, 1, 1) durch MeshBuilder
-        }
-    }
 
     // Reticle erstellen (die Funktion wird hier definiert, aber noch nicht aufgerufen)
     createReticle();
@@ -222,3 +198,27 @@ document.addEventListener("DOMContentLoaded", initializeApp);
 
 
 
+// Funktion zur Erstellung des Reticles (Zielkreuz/Platzierungsanzeige)
+function createReticle() {
+    // Nur erstellen, wenn es noch nicht existiert
+    if (!reticleMesh) {
+        reticleMesh = BABYLON.MeshBuilder.CreateSphere("standardBox", { width: 1, height: 0.5, depth: 0.3, updatable: true }, scene); // Angepasste Größe
+        let reticleMat = new BABYLON.StandardMaterial("reticleMaterial", scene);
+        reticleMat.diffuseColor = new BABYLON.Color3(0.5, 0.5, 1); // Hellblau/Lila
+        reticleMat.roughness = 1; // Matt
+        reticleMat.disableLighting = true; // Unbeeinflusst von Licht
+        reticleMat.backFaceCulling = false; // Rückseite sichtbar machen
+
+        // Korrigiert: Das erstellte Material 'reticleMat' verwenden
+        reticleMesh.material = reticleMat;
+        reticleMesh.renderingGroupId = 1; // Über anderen Objekten rendern (falls nötig)
+        reticleMesh.isVisible = false; // Standardmäßig unsichtbar
+        reticleMesh.isPickable = false; // Nicht anklickbar machen
+
+        // Sicherstellen, dass ein Quaternion für die Rotation vorhanden ist
+        if (!reticleMesh.rotationQuaternion) {
+                reticleMesh.rotationQuaternion = BABYLON.Quaternion.Identity();
+        }
+            // Skalierung bleibt Standard (1, 1, 1) durch MeshBuilder
+    }
+}
