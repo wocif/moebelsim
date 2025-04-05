@@ -68,6 +68,15 @@ const createScene = async function () {
     text1.paddingLeft = "10px"; // Linker Innenabstand
     text1.paddingRight = "10px"; // Rechter Innenabstand
 
+    xr.baseExperience.sessionManager.onXRSessionInit.add(() => { // TODO
+        rectangle.isVisible = false;
+    });
+    xr.baseExperience.sessionManager.onXRSessionEnded.add(() => {
+        rectangle.isVisible = true;
+    });
+
+    
+
     // Text basierend auf AR-Verfügbarkeit setzen
     if (!arAvailable) {
         text1.text = "AR is not available in your system. Please use a supported device (e.g., Meta Quest 3 or modern Android) and browser (e.g., Chrome).";
@@ -91,6 +100,10 @@ const createScene = async function () {
         },
         optionalFeatures: true // Optionale Features aktivieren, falls verfügbar
     });
+
+
+
+
 
     // Überprüfen, ob XR erfolgreich initialisiert wurde
     if (!xr.baseExperience) {
